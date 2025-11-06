@@ -5,7 +5,6 @@
 
   export default defineConfig({
     plugins: [react()],
-    base: '/ai-lecture-mate/',
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {

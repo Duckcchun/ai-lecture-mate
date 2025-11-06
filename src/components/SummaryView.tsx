@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Clock, Sparkles, Search, Download, Share2, Tag, FileText, Trash2, Edit2 } from 'lucide-react';
+import { ArrowLeft, Clock, Sparkles, Search, Download, Share2, Tag, FileText, Trash2, Edit2, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -23,6 +23,7 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState(lecture.title);
+  const [editedProfessor, setEditedProfessor] = useState(lecture.professor || '');
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -70,7 +71,11 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
   });
 
   const handleSaveTitle = () => {
-    onUpdateLecture({ ...lecture, title: editedTitle });
+    onUpdateLecture({ 
+      ...lecture, 
+      title: editedTitle,
+      professor: editedProfessor || undefined
+    });
     setEditDialogOpen(false);
   };
 
@@ -92,23 +97,34 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
   };
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen p-4">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <Button variant="ghost" onClick={onBack} className="mb-4">
+        <div className="mb-4">
+          <Button variant="ghost" size="sm" onClick={onBack} className="mb-3">
             <ArrowLeft className="w-4 h-4 mr-2" />
             뒤로 가기
           </Button>
 
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
+          <Card className="p-4">
+            <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <h2 className="text-3xl mb-2">{lecture.title}</h2>
-                <p className="text-gray-600">{formatDate(lecture.date)}</p>
+                <h2 className="text-xl mb-1">{lecture.title}</h2>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  {lecture.professor && (
+                    <>
+                      <span className="flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        {lecture.professor}
+                      </span>
+                      <span className="text-gray-300">•</span>
+                    </>
+                  )}
+                  <span>{formatDate(lecture.date)}</span>
+                </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setEditedTitle(lecture.title); setEditDialogOpen(true); }}>
+                <Button variant="outline" size="sm" onClick={() => { setEditedTitle(lecture.title); setEditedProfessor(lecture.professor || ''); setEditDialogOpen(true); }}>
                   <Edit2 className="w-4 h-4 mr-2" />
                   수정
                 </Button>
@@ -123,25 +139,25 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4" />
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
                 <span>{formatTime(lecture.duration)}</span>
               </div>
-              <div className="flex items-center gap-2 text-purple-600">
-                <Sparkles className="w-4 h-4" />
-                <span>핵심 {lecture.highlights.length}개</span>
+              <div className="flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                <span>{lecture.highlights.length}개</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <FileText className="w-4 h-4" />
-                <span>자막 {lecture.transcript.length}줄</span>
+              <div className="flex items-center gap-1">
+                <FileText className="w-3 h-3" />
+                <span>{lecture.transcript.length}줄</span>
               </div>
             </div>
           </Card>
         </div>
 
         {/* Search */}
-        <Card className="p-4 mb-6">
+        <Card className="p-3 mb-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -164,14 +180,13 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
 
           {/* Keyword Filter */}
           {allKeywords.length > 0 && (
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <Tag className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600">빠른 검색:</span>
-              {allKeywords.slice(0, 10).map((keyword, idx) => (
+            <div className="flex items-center gap-1 mt-3 flex-wrap">
+              <span className="text-xs text-gray-600">빠른:</span>
+              {allKeywords.slice(0, 8).map((keyword, idx) => (
                 <Badge
                   key={idx}
                   variant={selectedKeyword === keyword ? 'default' : 'outline'}
-                  className="cursor-pointer hover:bg-gray-100"
+                  className="cursor-pointer hover:bg-gray-100 text-xs py-0"
                   onClick={() => {
                     setSelectedKeyword(selectedKeyword === keyword ? null : keyword);
                     setSearchQuery('');
@@ -185,26 +200,26 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
         </Card>
 
         {/* Main Content */}
-        <Tabs defaultValue="highlights" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="highlights">
-              <Sparkles className="w-4 h-4 mr-2" />
-              핵심 하이라이트
+        <Tabs defaultValue="highlights" className="space-y-4">
+          <TabsList className="grid w-full max-w-sm grid-cols-2">
+            <TabsTrigger value="highlights" className="text-sm">
+              <Sparkles className="w-3 h-3 mr-1" />
+              하이라이트
             </TabsTrigger>
-            <TabsTrigger value="transcript">
-              <FileText className="w-4 h-4 mr-2" />
+            <TabsTrigger value="transcript" className="text-sm">
+              <FileText className="w-3 h-3 mr-1" />
               전체 자막
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="highlights" className="space-y-4">
+          <TabsContent value="highlights" className="space-y-3">
             {filteredHighlights.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500">검색 결과가 없습니다</p>
+              <Card className="p-8 text-center">
+                <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-sm text-gray-500">검색 결과가 없습니다</p>
               </Card>
             ) : (
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-3">
                 {filteredHighlights.map((highlight, index) => (
                   <HighlightCard
                     key={highlight.id}
@@ -217,33 +232,33 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
             )}
           </TabsContent>
 
-          <TabsContent value="transcript" className="space-y-4">
-            <Card className="p-6">
+          <TabsContent value="transcript" className="space-y-3">
+            <Card className="p-4">
               {filteredTranscript.length === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500">검색 결과가 없습니다</p>
+                <div className="text-center py-8">
+                  <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm text-gray-500">검색 결과가 없습니다</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {filteredTranscript.map((segment) => (
                     <div
                       key={segment.id}
-                      className={`p-4 rounded-lg transition-colors ${
+                      className={`p-3 rounded-md transition-colors ${
                         segment.isHighlight
-                          ? 'bg-yellow-100 border-l-4 border-yellow-500'
+                          ? 'bg-yellow-100 border-l-2 border-yellow-600'
                           : 'bg-gray-50 hover:bg-gray-100'
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="text-sm text-gray-500 mt-0.5 min-w-[3rem]">
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-gray-500 mt-0.5 min-w-[2.5rem]">
                           {formatTime(segment.timestamp)}
                         </span>
-                        <p className={segment.isHighlight ? 'text-yellow-900' : 'text-gray-700'}>
+                        <p className={`text-sm ${segment.isHighlight ? 'text-yellow-900' : 'text-gray-700'}`}>
                           {segment.text}
                         </p>
                         {segment.isHighlight && (
-                          <Sparkles className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <Sparkles className="w-3 h-3 text-yellow-600 flex-shrink-0 mt-0.5" />
                         )}
                       </div>
                     </div>
@@ -255,16 +270,16 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
         </Tabs>
 
         {/* Summary Stats */}
-        <Card className="p-6 mt-6 bg-gradient-to-r from-blue-50 to-purple-50">
-          <h3 className="mb-4">학습 인사이트</h3>
-          <div className="grid md:grid-cols-3 gap-6">
+        <Card className="p-4 mt-4 bg-gray-50">
+          <h3 className="text-sm mb-3">학습 인사이트</h3>
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="text-sm text-gray-600 mb-1">전체 강의 시간</p>
-              <p className="text-2xl">{formatTime(lecture.duration)}</p>
+              <p className="text-xs text-gray-600 mb-1">강의 시간</p>
+              <p className="text-lg">{formatTime(lecture.duration)}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">핵심 구간 비율</p>
-              <p className="text-2xl">
+              <p className="text-xs text-gray-600 mb-1">핵심 비율</p>
+              <p className="text-lg">
                 {lecture.transcript.length > 0
                   ? Math.round((lecture.highlights.length / lecture.transcript.length) * 100)
                   : 0}
@@ -272,8 +287,8 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">주요 키워드</p>
-              <p className="text-2xl">{allKeywords.length}개</p>
+              <p className="text-xs text-gray-600 mb-1">키워드</p>
+              <p className="text-lg">{allKeywords.length}개</p>
             </div>
           </div>
         </Card>
@@ -283,17 +298,28 @@ export function SummaryView({ lecture, onUpdateLecture, onDeleteLecture, onBack 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>강의 제목 수정</DialogTitle>
+            <DialogTitle>강의 정보 수정</DialogTitle>
             <DialogDescription>
-              강의 제목을 수정하세요
+              강의 제목과 교수 명을 수정하세요
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-              placeholder="강의 제목"
-            />
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm text-gray-600 mb-2 block">강의 제목</label>
+              <Input
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                placeholder="강의 제목"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 mb-2 block">교수 명 (선택)</label>
+              <Input
+                value={editedProfessor}
+                onChange={(e) => setEditedProfessor(e.target.value)}
+                placeholder="예: 김철수 교수님"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
